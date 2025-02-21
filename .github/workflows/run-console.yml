@@ -10,7 +10,7 @@ on:
 
 jobs:
   run-console:
-    runs-on: [self-hosted, shared]
+    runs-on: [self-hosted, Linux, X64, shared]
 
     steps:
       - name: Checkout Public Repository
