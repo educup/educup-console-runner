@@ -10,7 +10,7 @@ on:
 
 jobs:
   run-console:
-    runs-on: [self-hosted]
+    runs-on: self-hosted
 
     steps:
       - name: Checkout Public Repository
@@ -26,6 +26,16 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '3.1.x'
+        env:
+          DOTNET_INSTALL_DIR: $HOME/dotnet
+
+      - name: Add .NET to PATH
+        run: |
+          echo 'export PATH=$PATH:$HOME/dotnet' >> ~/.bashrc
+          source ~/.bashrc
+
+      - name: Check .NET SDK Version
+        run: dotnet --version
 
       - name: Restore .NET packages
         run: dotnet restore educup-server/Playground/VAConsole/VAConsole.csproj --locked-mode
