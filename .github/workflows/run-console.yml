@@ -19,14 +19,6 @@ jobs:
         run: |
           git clone --depth 1 --branch ${{ github.event.inputs.branch || 'develop' }} https://x-access-token:${PAT_TOKEN}@github.com/educup/educup-server.git
 
-      - name: Setup wireguard
-        env:
-          VPN_CONFIG: ${{ secrets.VPN_CONFIG }}
-        run: |
-          sudo apt-get update && sudo apt-get install -y wireguard resolvconf
-          echo "$VPN_CONFIG" | sudo tee /etc/wireguard/wg0.conf
-          sudo wg-quick up wg0
-
       - name: Install dotnet
         uses: actions/setup-dotnet@v4
         with:
@@ -45,6 +37,14 @@ jobs:
 
       - name: Build project
         run: dotnet build educup-server/Playground/VAConsole/VAConsole.csproj -c Release
+
+      - name: Setup wireguard
+        env:
+          VPN_CONFIG: ${{ secrets.VPN_CONFIG }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y wireguard resolvconf
+          echo "$VPN_CONFIG" | sudo tee /etc/wireguard/wg0.conf
+          sudo wg-quick up wg0
 
       - name: Run project
         working-directory: educup-server/Playground/VAConsole/bin/Release/netcoreapp3.1
