@@ -7,15 +7,19 @@ on:
         description: 'Branch'
         required: false
         default: 'develop'
+      runner:
+        description: 'Runner'
+        required: true
+        default: 'self-hosted'
+        options:
+          - ubuntu-22.04
+          - self-hosted
 
 jobs:
   run-console:
-    runs-on: self-hosted
+    runs-on: ${{ github.event.inputs.runner }}
 
     steps:
-      - name: Checkout Public Repository
-        uses: actions/checkout@v3
-
       - name: Clone Private Repository
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
@@ -33,9 +37,6 @@ jobs:
         run: |
           echo 'export PATH=$PATH:$HOME/dotnet' >> ~/.bashrc
           source ~/.bashrc
-
-      - name: Check .NET SDK Version
-        run: dotnet --version
 
       - name: Restore .NET packages
         run: dotnet restore educup-server/Playground/VAConsole/VAConsole.csproj --locked-mode
