@@ -1,4 +1,4 @@
-name: Run Console Project
+name: Run Console
 
 on:
   workflow_dispatch:
@@ -7,43 +7,45 @@ on:
         description: 'Branch'
         required: false
         default: 'develop'
-      runner:
-        type: choice
-        description: 'Runner'
-        required: true
-        default: 'self-hosted'
-        options:
-          - ubuntu-22.04
-          - self-hosted
 
 jobs:
   run-console:
-    runs-on: ${{ github.event.inputs.runner }}
+    runs-on: ubuntu-22.04
 
     steps:
-      - name: Clone Private Repository
+      - name: Clone repository
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          git clone --branch ${{ github.event.inputs.branch || 'develop' }} https://x-access-token:${PAT_TOKEN}@github.com/educup/educup-server.git
+          git clone --depth 1 --branch ${{ github.event.inputs.branch || 'develop' }} https://x-access-token:${PAT_TOKEN}@github.com/educup/educup-server.git
 
-      - name: Setup .NET Core 3.1.x
+      - name: Setup wireguard
+        env:
+          VPN_CONFIG: ${{ secrets.VPN_CONFIG }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y wireguard resolvconf
+          echo "$VPN_CONFIG" | sudo tee /etc/wireguard/wg0.conf
+          sudo wg-quick up wg0
+
+      - name: Install dotnet
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '3.1.x'
-        env:
-          DOTNET_INSTALL_DIR: $HOME/dotnet
 
-      - name: Add .NET to PATH
-        run: |
-          echo 'export PATH=$PATH:$HOME/dotnet' >> ~/.bashrc
-          source ~/.bashrc
+      - name: Config cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-3dot1-nuget-v1
 
-      - name: Restore .NET packages
+      - name: Restore packages
         run: dotnet restore educup-server/Playground/VAConsole/VAConsole.csproj --locked-mode
 
-      - name: Build the project
-        run: dotnet build educup-server/Playground/VAConsole/VAConsole.csproj --configuration Release
+      - name: Build project
+        run: dotnet build educup-server/Playground/VAConsole/VAConsole.csproj -c Release
 
-      - name: Run the console project
-        run: dotnet run --project educup-server/Playground/VAConsole/VAConsole.csproj --configuration Release
+      - name: Run project
+        working-directory: educup-server/Playground/VAConsole/bin/Release/netcoreapp3.1
+        run: dotnet VAConsole.dll
