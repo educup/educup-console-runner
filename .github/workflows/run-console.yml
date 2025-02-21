@@ -1,0 +1,37 @@
+name: Run Console Project
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch'
+        required: false
+        default: 'develop'
+
+jobs:
+  run-console:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Public Repository
+        uses: actions/checkout@v3
+
+      - name: Clone Private Repository
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git clone --branch ${{ github.event.inputs.branch || 'develop' }} https://x-access-token:${PAT_TOKEN}@github.com/educup/educup-server.git
+
+      - name: Setup .NET Core 3.1.x
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '3.1.x'
+
+      - name: Restore .NET packages
+        run: dotnet restore educup-server/Playground/VAConsole/VAConsole.csproj --locked-mode
+
+      - name: Build the project
+        run: dotnet build educup-server/Playground/VAConsole/VAConsole.csproj --configuration Release
+
+      - name: Run the console project
+        run: dotnet run --project educup-server/Playground/VAConsole/VAConsole.csproj --configuration Release
