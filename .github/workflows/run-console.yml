@@ -8,6 +8,7 @@ on:
         required: false
         default: 'develop'
       runner:
+        type: choice
         description: 'Runner'
         required: true
         default: 'self-hosted'
